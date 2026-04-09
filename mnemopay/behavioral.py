@@ -207,7 +207,6 @@ class BehavioralEngine:
         if not goal or goal.target <= 0 or goal.monthly_savings <= 0:
             raise ValueError("Goal must have positive target and monthly savings")
 
-        remaining = goal.target - goal.current
         delay_months = spend_amount / goal.monthly_savings if goal.monthly_savings > 0 else 0
         delay_days = round(delay_months * 30)
 

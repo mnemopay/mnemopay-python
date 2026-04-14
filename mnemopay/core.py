@@ -67,6 +67,87 @@ INJECTION_PATTERNS = [
     ),
 ]
 
+# ── Layer 2: Local Embedding (pure stdlib, zero deps) ─────────────────────
+# Mirrors the TypeScript localEmbed() in recall/engine.ts.
+# Hash-projection TF-IDF with bigrams, trigrams, and preference synonym expansion.
+
+_STOP_WORDS = {
+    'the','a','an','is','are','was','were','be','been','being','have','has','had',
+    'do','does','did','will','would','could','should','may','might','shall','can',
+    'to','of','in','for','on','with','at','by','from','as','into','through',
+    'and','but','or','nor','not','so','yet','both','each','few','more','most',
+    'other','some','such','no','only','same','than','too','very','just','about',
+    'up','it','its','this','that','these','those','i','me','my','we','our',
+    'you','your','he','him','his','she','her','they','them','their','what',
+    'which','who','because','out','off','over','under','then','once','again',
+}
+
+_PREFERENCE_SYNONYMS: Dict[str, List[str]] = {
+    'favorite': ['prefer','love','enjoy','like'],
+    'prefer':   ['favorite','love','enjoy','like'],
+    'love':     ['favorite','prefer','enjoy','like'],
+    'enjoy':    ['favorite','prefer','love','like'],
+    'like':     ['favorite','prefer','love','enjoy'],
+    'hate':     ['dislike','avoid','detest'],
+    'dislike':  ['hate','avoid'],
+    'allergic': ['allergy','intolerant','avoid','restrict'],
+    'restriction': ['restrict','allergic','avoid','diet'],
+}
+
+_EMBED_DIM = 384
+
+
+def _fnv1a(s: str) -> int:
+    h = 2166136261
+    for c in s.encode('utf-8'):
+        h ^= c
+        h = (h * 16777619) & 0xFFFFFFFF
+    return h
+
+
+def _tokenize_embed(text: str) -> List[str]:
+    cleaned = re.sub(r'[^a-z0-9\s]', ' ', text.lower())
+    return [w for w in cleaned.split() if len(w) > 1 and w not in _STOP_WORDS]
+
+
+def _local_embed(text: str, dimensions: int = _EMBED_DIM) -> List[float]:
+    """Convert text to a hash-projected TF-IDF vector (pure Python, zero deps)."""
+    base_tokens = _tokenize_embed(text)
+    expanded: set = set(base_tokens)
+    for tok in base_tokens:
+        for syn in _PREFERENCE_SYNONYMS.get(tok, []):
+            expanded.add(syn)
+
+    vec = [0.0] * dimensions
+
+    def add_token(token: str, weight: float) -> None:
+        h = _fnv1a(token)
+        w = weight * (1 + math.log(max(len(token), 1)))
+        vec[abs(h) % dimensions] += w
+        vec[abs(h * 31) % dimensions] += w * 0.5
+        vec[abs(h * 97) % dimensions] += w * 0.3
+        if len(token) > 4:
+            ph = _fnv1a(token[:4])
+            vec[abs(ph) % dimensions] += w * 0.3
+
+    for tok in expanded:
+        add_token(tok, 1.0)
+    for i in range(len(base_tokens) - 1):
+        add_token(f'{base_tokens[i]}_{base_tokens[i+1]}', 0.7)
+    for i in range(len(base_tokens) - 2):
+        add_token(f'{base_tokens[i]}_{base_tokens[i+1]}_{base_tokens[i+2]}', 0.4)
+
+    norm = math.sqrt(sum(x * x for x in vec))
+    return [x / norm for x in vec] if norm > 1e-10 else vec
+
+
+def _cosine_similarity(a: List[float], b: List[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    na = math.sqrt(sum(x * x for x in a))
+    nb = math.sqrt(sum(x * x for x in b))
+    return dot / (na * nb) if na * nb > 1e-10 else 0.0
+
+
 # ── Volume-tiered fees ─────────────────────────────────────────────────────
 
 _FEE_TIERS = [
@@ -168,6 +249,7 @@ class MnemoPay:
         self._decay = decay
         self._debug = debug
         self._memories: Dict[str, Memory] = {}
+        self._embeddings: Dict[str, List[float]] = {}   # Layer 2 vector cache
         self._transactions: Dict[str, Transaction] = {}
         self._audit_log: List[AuditEntry] = []
         self._disputes: Dict[str, Dispute] = {}
@@ -238,6 +320,7 @@ class MnemoPay:
             tags=safe_tags,
         )
         self._memories[mem.id] = mem
+        self._embeddings[mem.id] = _local_embed(safe_content)  # Layer 2: encode at write time
         self._audit("memory:stored", {"id": mem.id, "tags": safe_tags, "importance": mem.importance})
         self._emit("memory:stored", {"id": mem.id, "importance": mem.importance})
         self._log(
@@ -246,24 +329,45 @@ class MnemoPay:
         )
         return mem.id
 
-    def recall(self, query_or_limit: Any = 5) -> List[Memory]:
-        """Recall memories ranked by composite score.
+    def recall(self, query_or_limit: Any = 5, limit: int = 5) -> List[Memory]:
+        """Recall memories. Layer 2 semantic search when a string query is provided.
 
         Args:
-            query_or_limit: If int, the number of memories to return (default 5).
-                           If str, used as a query (score-based filtering still applies).
+            query_or_limit: str query for semantic recall, or int for score-only recall.
+            limit: Max results when query_or_limit is a string (default 5).
 
         Returns:
-            List of Memory objects sorted by score (highest first).
+            List of Memory objects sorted by relevance (highest first).
         """
-        limit = query_or_limit if isinstance(query_or_limit, int) else 5
+        if isinstance(query_or_limit, str):
+            query: Optional[str] = query_or_limit
+            actual_limit = limit
+        else:
+            query = None
+            actual_limit = int(query_or_limit) if query_or_limit else 5
 
         all_mems = list(self._memories.values())
         for m in all_mems:
             m.score = compute_score(m.importance, m.last_accessed, m.access_count, self._decay)
 
-        all_mems.sort(key=lambda m: m.score, reverse=True)
-        results = all_mems[:limit]
+        if query:
+            # Layer 2: hybrid score + cosine similarity
+            query_vec = _local_embed(query)
+            scored: List[tuple] = []
+            for m in all_mems:
+                vec = self._embeddings.get(m.id) or _local_embed(m.content)
+                if m.id not in self._embeddings:
+                    self._embeddings[m.id] = vec
+                vec_sim = _cosine_similarity(query_vec, vec)
+                # Normalize decay score to [0,1] range for blending
+                norm_score = m.score / max(m.score, 1.0)
+                combined = 0.5 * norm_score + 0.5 * vec_sim
+                scored.append((combined, m))
+            scored.sort(key=lambda x: x[0], reverse=True)
+            results = [m for _, m in scored[:actual_limit]]
+        else:
+            all_mems.sort(key=lambda m: m.score, reverse=True)
+            results = all_mems[:actual_limit]
 
         now = datetime.now(timezone.utc)
         for m in results:
@@ -271,7 +375,7 @@ class MnemoPay:
             m.access_count += 1
 
         self._emit("memory:recalled", {"count": len(results)})
-        self._log(f"Recalled {len(results)} memories")
+        self._log(f"Recalled {len(results)} memories (semantic={query is not None})")
         return results
 
     def forget(self, memory_id: str) -> bool:
@@ -310,6 +414,33 @@ class MnemoPay:
         mem.last_accessed = datetime.now(timezone.utc)
         self._audit("memory:reinforced", {"id": memory_id, "boost": boost, "new_importance": mem.importance})
         self._log(f"Reinforced memory {memory_id} by +{boost} -> {mem.importance:.2f}")
+
+    def rl_feedback(self, memory_ids: List[str], reward: float, alpha: float = 0.1) -> None:
+        """RL feedback loop — EWMA importance update for recalled memories.
+
+        Call after an agent action to signal whether the recalled memories
+        were useful. Updates importance via:
+            new_importance = α × ((reward+1)/2) + (1−α) × old_importance
+
+        Args:
+            memory_ids: IDs from the preceding recall.
+            reward:     Signal in [-1, 1]: +1=useful, 0=neutral, -1=useless.
+            alpha:      Learning rate in (0.01, 0.5], default 0.1.
+        """
+        clamped = max(-1.0, min(1.0, float(reward)))
+        normalized = (clamped + 1.0) / 2.0
+        alpha = max(0.01, min(0.5, float(alpha)))
+        updated = 0
+        for mid in memory_ids:
+            mem = self._memories.get(mid)
+            if not mem:
+                continue
+            mem.importance = max(0.0, min(1.0,
+                alpha * normalized + (1.0 - alpha) * mem.importance
+            ))
+            updated += 1
+        self._audit("memory:rl_feedback", {"ids": memory_ids, "reward": reward, "updated": updated})
+        self._log(f"rl_feedback: reward={reward:.2f}, updated {updated} memories")
 
     def consolidate(self) -> int:
         """Prune memories with scores below threshold (0.01).

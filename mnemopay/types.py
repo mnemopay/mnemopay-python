@@ -6,12 +6,10 @@ All types mirror the TypeScript SDK exactly — same field names, same semantics
 
 from __future__ import annotations
 
-import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
-
 
 # ── Enums ──────────────────────────────────────────────────────────────────
 

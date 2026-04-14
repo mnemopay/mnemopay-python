@@ -2,9 +2,7 @@
 Tests for BehavioralEngine: prospect theory, discounting, cooling-off, etc.
 """
 
-import math
 import time
-from datetime import datetime, timezone
 
 import pytest
 
@@ -18,7 +16,6 @@ from mnemopay.types import (
     RiskLevel,
     TradeEntry,
 )
-
 
 # ── Prospect Theory ───────────────────────────────────────────────────────
 

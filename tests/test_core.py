@@ -2,7 +2,6 @@
 Tests for MnemoPay core: memory operations, payments, ledger, reputation.
 """
 
-import math
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -11,23 +10,16 @@ import pytest
 from mnemopay import MnemoPay, auto_score, compute_score
 from mnemopay.core import (
     BASE_IMPORTANCE,
-    LONG_CONTENT_BOOST,
     LONG_CONTENT_THRESHOLD,
-    MAX_MEMORIES,
-    MAX_TRANSACTIONS,
     MAX_WALLET_BALANCE,
     _get_fee_rate,
     _sanitize_content,
     _validate_tags,
 )
 from mnemopay.types import (
-    BalanceInfo,
-    Memory,
     ReputationTier,
-    Transaction,
     TransactionStatus,
 )
-
 
 # ── Memory Operations ──────────────────────────────────────────────────────
 
@@ -141,12 +133,12 @@ class TestMemoryStore:
         agent = MnemoPay("test")
         mid = agent.remember("Very important", importance=1.0)
         agent.recall(1)  # Access it
-        pruned = agent.consolidate()
+        agent.consolidate()
         assert mid in [m.id for m in agent.recall(10)]
 
     def test_store_with_tags(self):
         agent = MnemoPay("test")
-        mid = agent.remember("Tagged memory", tags=["python", "sdk"])
+        agent.remember("Tagged memory", tags=["python", "sdk"])
         memories = agent.recall(1)
         assert memories[0].tags == ["python", "sdk"]
 
@@ -183,7 +175,7 @@ class TestMemoryStore:
 
     def test_recall_updates_access(self):
         agent = MnemoPay("test")
-        mid = agent.remember("Track access")
+        agent.remember("Track access")
         memories = agent.recall(1)
         assert memories[0].access_count == 1
         memories = agent.recall(1)
@@ -354,7 +346,7 @@ class TestPayments:
 
     def test_settle_reinforces_recent_memories(self):
         agent = MnemoPay("test")
-        mid = agent.remember("Active memory", importance=0.5)
+        agent.remember("Active memory", importance=0.5)
         agent.recall(1)  # Access it
         tx = agent.charge(10.00, "Test")
         agent.settle(tx.id)
@@ -528,7 +520,7 @@ class TestBalanceProfile:
 class TestHistory:
     def test_history_order(self):
         agent = MnemoPay("test")
-        tx1 = agent.charge(10.00, "First")
+        agent.charge(10.00, "First")
         tx2 = agent.charge(20.00, "Second")
         history = agent.history(10)
         assert len(history) == 2

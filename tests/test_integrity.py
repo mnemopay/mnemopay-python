@@ -7,7 +7,7 @@ import hashlib
 import pytest
 
 from mnemopay.integrity import MerkleTree, _sha256
-from mnemopay.types import IntegritySnapshot, MerkleLeaf, MerkleProof
+from mnemopay.types import IntegritySnapshot
 
 
 class TestMerkleBasics:
@@ -360,7 +360,7 @@ class TestSHA256:
         assert _sha256("test") == _sha256("test")
 
     def test_sha256_matches_hashlib(self):
-        expected = hashlib.sha256("test".encode()).hexdigest()
+        expected = hashlib.sha256(b"test").hexdigest()
         assert _sha256("test") == expected
 
     def test_sha256_length(self):

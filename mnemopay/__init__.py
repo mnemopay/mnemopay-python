@@ -11,67 +11,87 @@ Give any AI agent memory and a wallet in 5 lines:
     agent.settle(tx.id)
 """
 
+from .anomaly import BehaviorMonitor, CanarySystem, EWMADetector
+from .behavioral import BehavioralEngine
+from .circuit_breaker import (
+    AIMDConfig,
+    AIMDRateLimiter,
+    AntiGamingAlert,
+    AntiGamingEngine,
+    CircuitBreaker,
+    CircuitBreakerConfig,
+    CircuitState,
+    PSIDriftDetector,
+    PSIDriftResult,
+)
+from .commerce import (
+    CommerceEngine,
+    CommerceProvider,
+    Mandate,
+    MockProvider,
+    Order,
+    OrderStatus,
+    Product,
+)
 from .core import MnemoPay, auto_score, compute_score
 from .fico import AgentFICO
-from .behavioral import BehavioralEngine
 from .integrity import MerkleTree
-from .anomaly import EWMADetector, BehaviorMonitor, CanarySystem
 from .types import (
-    # Core types
-    Memory,
-    Transaction,
-    TransactionStatus,
-    BalanceInfo,
     AgentProfile,
-    Dispute,
+    AlertSeverity,
+    # Anomaly types
+    AnomalyConfig,
+    AssetMetrics,
     AuditEntry,
-    ReputationReport,
-    ReputationTier,
+    BalanceInfo,
+    # Behavioral types
+    BehavioralConfig,
+    BehaviorFingerprint,
+    CanaryAlert,
+    CanaryTransaction,
+    CanaryType,
+    CommitmentResult,
+    CoolingOffResult,
+    Dispute,
+    EndowedProgress,
+    EWMAAlert,
+    EWMAState,
+    FICOComponent,
     # FICO types
     FICOConfig,
     FICOInput,
-    FICOTransaction,
-    FICOResult,
-    FICOComponent,
     FICORating,
-    TrustLevel,
-    # Behavioral types
-    BehavioralConfig,
-    ProspectValue,
-    CoolingOffResult,
-    CommitmentResult,
-    LossFrame,
-    ReframedExpense,
-    RegretEntry,
-    RegretPrediction,
-    TradeEntry,
-    OverconfidenceResult,
-    AssetMetrics,
-    HerdAlert,
+    FICOResult,
+    FICOTransaction,
     FinancialGoal,
-    EndowedProgress,
-    RiskLevel,
+    HerdAlert,
     HerdSeverity,
+    HijackDetection,
+    HijackSeverity,
+    IntegritySnapshot,
+    LossFrame,
+    # Core types
+    Memory,
     # Integrity types
     MerkleLeaf,
     MerkleProof,
     MerkleProofStep,
-    IntegritySnapshot,
+    OverconfidenceResult,
+    ProspectValue,
+    ReframedExpense,
+    RegretEntry,
+    RegretPrediction,
+    ReputationReport,
+    ReputationTier,
+    RiskLevel,
     TamperResult,
-    # Anomaly types
-    AnomalyConfig,
-    EWMAState,
-    EWMAAlert,
-    AlertSeverity,
-    BehaviorFingerprint,
-    HijackDetection,
-    HijackSeverity,
-    CanaryTransaction,
-    CanaryAlert,
-    CanaryType,
+    TradeEntry,
+    Transaction,
+    TransactionStatus,
+    TrustLevel,
 )
 
-__version__ = "1.0.0b1"
+__version__ = "1.0.0b2"
 __all__ = [
     # Core
     "MnemoPay",
@@ -84,6 +104,24 @@ __all__ = [
     "EWMADetector",
     "BehaviorMonitor",
     "CanarySystem",
+    # Commerce
+    "CommerceEngine",
+    "CommerceProvider",
+    "MockProvider",
+    "Product",
+    "Order",
+    "OrderStatus",
+    "Mandate",
+    # Circuit Breaker & Rate Limiting
+    "CircuitBreaker",
+    "CircuitBreakerConfig",
+    "CircuitState",
+    "AIMDRateLimiter",
+    "AIMDConfig",
+    "AntiGamingEngine",
+    "AntiGamingAlert",
+    "PSIDriftDetector",
+    "PSIDriftResult",
     # Types
     "Memory",
     "Transaction",

@@ -2,8 +2,6 @@
 Tests for anomaly detection: EWMA, BehaviorMonitor, CanarySystem.
 """
 
-import math
-import time
 
 import pytest
 
@@ -14,7 +12,6 @@ from mnemopay.types import (
     CanaryType,
     HijackSeverity,
 )
-
 
 # ── EWMA Detector ─────────────────────────────────────────────────────────
 
@@ -135,7 +132,7 @@ class TestEWMAUpdate:
         """sigma^2 = alpha * (x - mu)^2 + (1 - alpha) * sigma^2_{t-1}"""
         det = EWMADetector(alpha=0.15)
         det.update(100)
-        alert = det.update(200)
+        det.update(200)
         # After update: mean = 115, deviation = 200 - 115 = 85
         # variance = 0.15 * 85^2 + 0.85 * 0 = 0.15 * 7225 = 1083.75
         assert det._variance == pytest.approx(0.15 * (200 - 115) ** 2, abs=1)

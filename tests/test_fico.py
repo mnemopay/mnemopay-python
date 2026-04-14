@@ -3,7 +3,6 @@ Tests for Agent FICO credit scoring.
 """
 
 import json
-import math
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -13,7 +12,6 @@ from mnemopay.types import (
     FICOConfig,
     FICOInput,
     FICORating,
-    FICOResult,
     FICOTransaction,
     TransactionStatus,
     TrustLevel,

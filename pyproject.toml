@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mnemopay"
-version = "1.0.0b2"
+version = "1.0.0b3"
 description = "Memory + Wallet for AI Agents. Give any agent persistent memory and micropayment capabilities."
 readme = "README.md"
 license = {text = "MIT"}

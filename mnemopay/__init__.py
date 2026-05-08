@@ -36,6 +36,13 @@ from .commerce import (
 from .core import MnemoPay, auto_score, compute_score
 from .fico import AgentFICO
 from .integrity import MerkleTree
+from .rails import (
+    HoldOptions,
+    MockRail,
+    PaymentRail,
+    PaymentRailResult,
+    StripeRail,
+)
 from .types import (
     AgentProfile,
     AlertSeverity,
@@ -91,7 +98,7 @@ from .types import (
     TrustLevel,
 )
 
-__version__ = "1.0.0b2"
+__version__ = "1.0.0b4"
 __all__ = [
     # Core
     "MnemoPay",
@@ -104,6 +111,12 @@ __all__ = [
     "EWMADetector",
     "BehaviorMonitor",
     "CanarySystem",
+    # Rails (v1.0.0b4 — parity with TS @mnemopay/sdk v1.6.x)
+    "PaymentRail",
+    "PaymentRailResult",
+    "HoldOptions",
+    "MockRail",
+    "StripeRail",
     # Commerce
     "CommerceEngine",
     "CommerceProvider",

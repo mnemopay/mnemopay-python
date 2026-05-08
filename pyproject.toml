@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mnemopay"
-version = "1.0.0b3"
+version = "1.0.0b4"
 description = "Memory + Wallet for AI Agents. Give any agent persistent memory and micropayment capabilities."
 readme = "README.md"
 license = {text = "MIT"}
@@ -37,6 +37,9 @@ Documentation = "https://getbizsuite.com/mnemopay"
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
+]
+stripe = [
+    "stripe>=12.0.0",
 ]
 
 [tool.setuptools.packages.find]

@@ -1,0 +1,70 @@
+MnemoPay Python SDK
+Copyright (c) 2026 Jeremiah Omiagbo / J&B Enterprise LLC. All rights reserved.
+
+Original author: Jeremiah Omiagbo (jeremiah@getbizsuite.com)
+First published: April 2026 (PyPI: mnemopay v1.0.0b1)
+GitHub: https://github.com/mnemopay/mnemopay-python
+
+This software is licensed under the Apache License, Version 2.0
+(see LICENSE file).
+
+══════════════════════════════════════════════════════════════════════════
+LICENSE HISTORY — VERSION SPLIT
+══════════════════════════════════════════════════════════════════════════
+
+  v1.0.0b1, v1.0.0b2, v1.0.0b3, v1.0.0b4    MIT License
+  v1.0.0 and later                          Apache License 2.0
+
+The four pre-release betas (`1.0.0b1` through `1.0.0b4`, published April
+through May 2026) are permanently licensed under the MIT License and
+remain available under those terms on PyPI. The first stable release
+(`v1.0.0`) and all subsequent versions are licensed under the Apache
+License 2.0.
+
+Reason for the relicense at the stable cut: alignment with the canonical
+TypeScript SDK at https://www.npmjs.com/package/@mnemopay/sdk (Apache 2.0),
+plus the patent grant + retaliation clause Apache 2.0 provides for
+enterprise embedders. If you depend on the MIT terms specifically, pin to
+`mnemopay==1.0.0b4` — that version stays MIT in perpetuity.
+
+══════════════════════════════════════════════════════════════════════════
+PRIOR ART CHAIN
+══════════════════════════════════════════════════════════════════════════
+
+- 2026-04-xx: v1.0.0b1 published to PyPI (MIT, timestamped, immutable)
+- 2026-04-xx: v1.0.0b2 published to PyPI (MIT)
+- 2026-04-xx: v1.0.0b3 published to PyPI (MIT)
+- 2026-05-xx: v1.0.0b4 published to PyPI (MIT)  — last MIT release
+- 2026-xx-xx: v1.0.0   published to PyPI (Apache 2.0) — first stable
+
+══════════════════════════════════════════════════════════════════════════
+ORIGINAL INVENTIONS DOCUMENTED HEREIN
+══════════════════════════════════════════════════════════════════════════
+
+These inventions also appear in the canonical TypeScript SDK; the
+Python port mirrors the spec.
+
+1. Memory-Payment Feedback Loop — payment settlements reinforce the
+   memories that led to the decision (Hebbian learning applied to agent
+   economics).
+2. Agent Credit Score — reputation computed from settlement history,
+   memory quality, dispute rate, and behavioral patterns (formerly
+   "Agent FICO"; renamed to avoid implied association with Fair Isaac
+   Corporation).
+3. Adaptive Engine — self-optimizing fee rates, risk thresholds, and
+   policy parameters that learn from settlement and dispute outcomes.
+
+══════════════════════════════════════════════════════════════════════════
+TRADEMARK
+══════════════════════════════════════════════════════════════════════════
+
+"MnemoPay" is a trademark of J&B Enterprise LLC. Use of the name in
+forks, redistributions, or derivative works requires explicit permission
+under Apache 2.0 Section 6.
+
+══════════════════════════════════════════════════════════════════════════
+CONTACT
+══════════════════════════════════════════════════════════════════════════
+
+For licensing questions, security issues, or commercial support:
+  jeremiah@getbizsuite.com

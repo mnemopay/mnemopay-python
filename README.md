@@ -128,6 +128,14 @@ pytest tests/test_rails.py -v   # 29 rail-specific tests
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+**v1.0.0+ is Apache License 2.0** — see [LICENSE](LICENSE) and [NOTICE](NOTICE).
+
+The pre-release betas (`1.0.0b1` through `1.0.0b4`) shipped under the MIT
+License and remain available under those terms on PyPI in perpetuity. If
+you depend on the MIT terms specifically, pin to `mnemopay==1.0.0b4`.
+
+Why Apache 2.0 at the stable cut: alignment with the canonical TypeScript
+SDK at [`@mnemopay/sdk`](https://www.npmjs.com/package/@mnemopay/sdk) plus
+the patent grant + retaliation clause for enterprise embedders.
 
 Copyright 2026 J&B Enterprise LLC.

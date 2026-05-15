@@ -4,19 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mnemopay"
-version = "1.0.0b4"
+version = "1.0.0"
 description = "Memory + Wallet for AI Agents. Give any agent persistent memory and micropayment capabilities."
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 requires-python = ">=3.9"
 authors = [
-    {name = "Jerry Omiagbo", email = "jeremiah@getbizsuite.com"},
+    {name = "Jeremiah Omiagbo", email = "jeremiah@getbizsuite.com"},
 ]
 keywords = ["ai", "agents", "memory", "payments", "fico", "behavioral-finance", "anomaly-detection"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",

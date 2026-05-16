@@ -33,6 +33,15 @@ from .commerce import (
     OrderStatus,
     Product,
 )
+from .agent_credit_score import (
+    AgentCreditRating,
+    AgentCreditScore,
+    AgentCreditScoreComponent,
+    AgentCreditScoreConfig,
+    AgentCreditScoreInput,
+    AgentCreditScoreResult,
+    AgentCreditScoreTransaction,
+)
 from .core import MnemoPay, auto_score, compute_score
 from .fico import AgentFICO
 from .integrity import MerkleTree
@@ -98,14 +107,15 @@ from .types import (
     TrustLevel,
 )
 
-__version__ = "1.0.0b4"
+__version__ = "1.0.1"
 __all__ = [
     # Core
     "MnemoPay",
     "auto_score",
     "compute_score",
     # Modules
-    "AgentFICO",
+    "AgentCreditScore",
+    "AgentFICO",  # deprecated alias of AgentCreditScore; removal v2.0.0
     "BehavioralEngine",
     "MerkleTree",
     "EWMADetector",
@@ -145,6 +155,14 @@ __all__ = [
     "AuditEntry",
     "ReputationReport",
     "ReputationTier",
+    # Agent Credit Score types (canonical)
+    "AgentCreditScoreConfig",
+    "AgentCreditScoreInput",
+    "AgentCreditScoreTransaction",
+    "AgentCreditScoreResult",
+    "AgentCreditScoreComponent",
+    "AgentCreditRating",
+    # FICO* type aliases — deprecated, removed v2.0.0
     "FICOConfig",
     "FICOInput",
     "FICOTransaction",

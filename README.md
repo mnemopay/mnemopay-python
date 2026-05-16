@@ -25,7 +25,7 @@ pip install "mnemopay[stripe]"        # + StripeRail (peer-loaded `stripe>=12.0`
 - **Payment rails** (v1.0.0b4 — parity with TS v1.6.x): `MockRail` + `StripeRail` with manual-capture two-phase commit, threading-safe capture race-protection, idempotency-key forwarding
 - **Cognitive Memory**: Ebbinghaus decay, Hebbian reinforcement, auto-scoring, Layer 2 semantic recall + RL feedback
 - **Micropayments**: escrow-based charges with volume-tiered fees (1.9% / 1.5% / 1.0%)
-- **Agent FICO**: agent credit scoring (300-850 range; not consumer FICO, not FCRA-regulated)
+- **Agent Credit Score**: FICO-style agent behavioral scoring (300-850 range; not consumer FICO, not FCRA-regulated, not affiliated with Fair Isaac Corporation). Importable as `AgentCreditScore` (preferred) or the deprecated `AgentFICO` alias.
 - **Behavioral Finance**: prospect theory, cooling-off periods, regret prediction
 - **Merkle Integrity**: SHA-256 tamper detection for agent memory
 - **Anomaly Detection**: EWMA streaming detector, behavioral fingerprinting, canary honeypots
@@ -40,7 +40,7 @@ pip install "mnemopay[stripe]"        # + StripeRail (peer-loaded `stripe>=12.0`
 |--------|-------|-------------|
 | `mnemopay.core` | `MnemoPay` | Memory + payments + reputation |
 | `mnemopay.rails` | `PaymentRail`, `MockRail`, `StripeRail` | Payment rail abstraction (v1.0.0b4) |
-| `mnemopay.fico` | `AgentFICO` | Credit scoring (300-850) |
+| `mnemopay.agent_credit_score` | `AgentCreditScore` | Credit scoring (300-850, FICO-style; not affiliated with Fair Isaac Corporation). The `mnemopay.fico` module + `AgentFICO` class remain as deprecated aliases. |
 | `mnemopay.behavioral` | `BehavioralEngine` | Behavioral finance tools |
 | `mnemopay.integrity` | `MerkleTree` | SHA-256 tamper detection |
 | `mnemopay.anomaly` | `EWMADetector`, `BehaviorMonitor`, `CanarySystem` | Anomaly detection |
@@ -139,3 +139,7 @@ SDK at [`@mnemopay/sdk`](https://www.npmjs.com/package/@mnemopay/sdk) plus
 the patent grant + retaliation clause for enterprise embedders.
 
 Copyright 2026 J&B Enterprise LLC.
+
+## Trademark notice
+
+FICO is a registered trademark of Fair Isaac Corporation. MnemoPay's Agent Credit Score is FICO-style behavioral scoring (300-850 range, five-component methodology) and is not affiliated with or endorsed by Fair Isaac Corporation. Consumer FICO scores are regulated under the FCRA and produced by Fair Isaac Corporation; this SDK produces neither.

@@ -1,8 +1,31 @@
 """
-Agent FICO -- Credit Score for AI Agents
+Agent Credit Score -- FICO-style behavioral credit scoring for AI agents.
 
-Mirrors human FICO (300-850 range) adapted for agent behavior.
-Five components weighted identically to FICO's public methodology:
+**Deprecated module name.** This module is preserved for backwards
+compatibility under the legacy `mnemopay.fico` import path. New code
+should import from `mnemopay.agent_credit_score` (or the top-level
+`mnemopay` package), which re-exports the same engine under canonical
+names:
+
+  AgentFICO              -> AgentCreditScore
+  FICOConfig             -> AgentCreditScoreConfig
+  FICOInput              -> AgentCreditScoreInput
+  FICOResult             -> AgentCreditScoreResult
+  FICOComponent          -> AgentCreditScoreComponent
+  FICOTransaction        -> AgentCreditScoreTransaction
+  FICORating             -> AgentCreditRating
+
+The legacy names continue to work and produce identical output.
+Removal is targeted for v2.0.0.
+
+Trademark notice
+----------------
+FICO is a registered trademark of Fair Isaac Corporation. MnemoPay's
+Agent Credit Score is not affiliated with or endorsed by Fair Isaac
+Corporation. The 300-850 range and five-component methodology are used
+in the agent-credit-score sense.
+
+Methodology (unchanged):
 
   1. Payment History    (35%) -- on-time settlements, disputes, late payments
   2. Credit Utilization (20%) -- spend vs budget cap, sweet spot 10-30%
@@ -11,7 +34,6 @@ Five components weighted identically to FICO's public methodology:
   5. Fraud Record        (15%) -- fraud flags, disputes lost, warnings
 
 Score is deterministic given inputs. No randomness, no hidden state.
-All parameters from published FICO methodology + agent-specific adaptations.
 
 References:
   - FICO Score Open Access: myfico.com/credit-education
@@ -23,6 +45,7 @@ from __future__ import annotations
 
 import json
 import math
+import warnings
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -91,10 +114,42 @@ def _extract_category(reason: str) -> str:
     return first_word or "unknown"
 
 
+_warned_agent_fico_deprecated = False
+
+
+def _maybe_warn_agent_fico_deprecated() -> None:
+    """Emit a one-process DeprecationWarning the first time AgentFICO is
+    instantiated. DeprecationWarning is silent by default under CPython, so
+    this is non-intrusive for end users while still showing up under
+    `-W default` or pytest's default filters."""
+    global _warned_agent_fico_deprecated
+    if _warned_agent_fico_deprecated:
+        return
+    _warned_agent_fico_deprecated = True
+    warnings.warn(
+        "mnemopay.fico.AgentFICO is deprecated; use "
+        "mnemopay.AgentCreditScore (alias of the same engine) instead. "
+        "The legacy name will be removed in v2.0.0. FICO is a registered "
+        "trademark of Fair Isaac Corporation; MnemoPay is not affiliated "
+        "with Fair Isaac Corporation.",
+        DeprecationWarning,
+        stacklevel=3,
+    )
+
+
 class AgentFICO:
-    """Agent FICO credit scoring engine. Deterministic: same inputs, same score."""
+    """FICO-style agent credit scoring engine.
+
+    Deterministic: same inputs, same score.
+
+    .. deprecated::
+        Use :class:`mnemopay.AgentCreditScore` instead. This class name will be
+        removed in v2.0.0. FICO is a registered trademark of Fair Isaac
+        Corporation; MnemoPay is not affiliated with Fair Isaac Corporation.
+    """
 
     def __init__(self, config: Optional[FICOConfig] = None) -> None:
+        _maybe_warn_agent_fico_deprecated()
         self.config = config or FICOConfig()
 
         # Validate weights sum to 1.0

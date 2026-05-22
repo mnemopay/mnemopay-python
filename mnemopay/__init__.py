@@ -51,6 +51,8 @@ from .rails import (
     PaymentRail,
     PaymentRailResult,
     StripeRail,
+    PaystackRail,
+    LightningRail,
 )
 from .types import (
     AgentProfile,
@@ -127,6 +129,8 @@ __all__ = [
     "HoldOptions",
     "MockRail",
     "StripeRail",
+    "PaystackRail",
+    "LightningRail",
     # Commerce
     "CommerceEngine",
     "CommerceProvider",

@@ -147,9 +147,11 @@ class MockRail:
 
 # ─── Re-exports ──────────────────────────────────────────────────────────
 
-# StripeRail is in a separate module so the ``stripe`` peer-dep import
-# is only attempted when someone constructs a StripeRail.
+# Rails are kept in separate modules so peer-dep imports / socket operations
+# are only attempted when someone constructs a specific Rail.
 from .stripe import StripeRail  # noqa: E402
+from .paystack import PaystackRail, NIGERIAN_BANKS  # noqa: E402
+from .lightning import LightningRail  # noqa: E402
 
 __all__ = [
     "PaymentRail",
@@ -157,4 +159,8 @@ __all__ = [
     "HoldOptions",
     "MockRail",
     "StripeRail",
+    "PaystackRail",
+    "LightningRail",
+    "NIGERIAN_BANKS",
 ]
+

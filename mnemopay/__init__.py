@@ -109,7 +109,7 @@ from .types import (
     TrustLevel,
 )
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 __all__ = [
     # Core
     "MnemoPay",
@@ -123,7 +123,7 @@ __all__ = [
     "EWMADetector",
     "BehaviorMonitor",
     "CanarySystem",
-    # Rails (v1.0.0b4 — parity with TS @mnemopay/sdk v1.6.x)
+    # Rails (parity with TS @mnemopay/sdk: Mock, Stripe, Paystack, Lightning)
     "PaymentRail",
     "PaymentRailResult",
     "HoldOptions",

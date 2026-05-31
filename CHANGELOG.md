@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.1 — 2026-05-30 — Docs + metadata sync
+
+No code changes — documentation and packaging metadata catch up to the 1.1.0 rail work and the current TypeScript SDK state.
+
+Changed:
+- `README.md` Features + Modules + compatibility table now reflect the four shipped rails (`MockRail`, `StripeRail`, `PaystackRail`, `LightningRail`) instead of the stale "v1.0.0b4 / not yet" claims. Test count corrected to 435.
+- Compatibility table version headers updated to TypeScript v1.12.0 / Python v1.1.1. The TypeScript SDK's governance surface now includes the risk taxonomy, typed action ledger, and governed-skills runner (still **not yet** ported to Python — tracked for a future minor).
+- `__init__.py` rails comment de-stale-d (dropped the "v1.0.0b4 — parity with TS v1.6.x" note).
+
+Governance parity (charter / FiscalGate / Article 12 / risk / action ledger / skills) remains a Python gap; open an issue if you need a specific primitive ported.
+
 ## 1.1.0 — 2026-05-22 — Paystack + Lightning rails (TypeScript parity)
 
 Adds full Paystack and Lightning Network payment rails to the Python SDK, achieving 100% interface parity with the TypeScript `@mnemopay/sdk` rails surface. Same `PaymentRail` Protocol, same `PaymentRailResult` dataclass, same `HoldOptions`, same capture / release / reverse / settle semantics. Pick your language, pick your rail, ship.

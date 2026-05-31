@@ -22,7 +22,7 @@ pip install "mnemopay[stripe]"        # + StripeRail (peer-loaded `stripe>=12.0`
 
 ## Features
 
-- **Payment rails** (v1.0.0b4 — parity with TS v1.6.x): `MockRail` + `StripeRail` with manual-capture two-phase commit, threading-safe capture race-protection, idempotency-key forwarding
+- **Payment rails** (TS parity): `MockRail`, `StripeRail`, `PaystackRail`, `LightningRail` — manual-capture two-phase commit, threading-safe capture race-protection, idempotency-key forwarding
 - **Cognitive Memory**: Ebbinghaus decay, Hebbian reinforcement, auto-scoring, Layer 2 semantic recall + RL feedback
 - **Micropayments**: escrow-based charges with volume-tiered fees (1.9% / 1.5% / 1.0%)
 - **Agent Credit Score**: FICO-style agent behavioral scoring (300-850 range; not consumer FICO, not FCRA-regulated, not affiliated with Fair Isaac Corporation). Importable as `AgentCreditScore` (preferred) or the deprecated `AgentFICO` alias.
@@ -39,7 +39,7 @@ pip install "mnemopay[stripe]"        # + StripeRail (peer-loaded `stripe>=12.0`
 | Module | Class | Description |
 |--------|-------|-------------|
 | `mnemopay.core` | `MnemoPay` | Memory + payments + reputation |
-| `mnemopay.rails` | `PaymentRail`, `MockRail`, `StripeRail` | Payment rail abstraction (v1.0.0b4) |
+| `mnemopay.rails` | `PaymentRail`, `MockRail`, `StripeRail`, `PaystackRail`, `LightningRail` | Payment rail abstraction |
 | `mnemopay.agent_credit_score` | `AgentCreditScore` | Credit scoring (300-850, FICO-style; not affiliated with Fair Isaac Corporation). The `mnemopay.fico` module + `AgentFICO` class remain as deprecated aliases. |
 | `mnemopay.behavioral` | `BehavioralEngine` | Behavioral finance tools |
 | `mnemopay.integrity` | `MerkleTree` | SHA-256 tamper detection |
@@ -47,7 +47,7 @@ pip install "mnemopay[stripe]"        # + StripeRail (peer-loaded `stripe>=12.0`
 | `mnemopay.commerce` | `CommerceEngine`, `CommerceProvider`, `Mandate` | Autonomous shopping |
 | `mnemopay.circuit_breaker` | `CircuitBreaker`, `AIMDRateLimiter`, `AntiGamingEngine`, `PSIDriftDetector` | Adaptive defense |
 
-## Payment rails (v1.0.0b4)
+## Payment rails
 
 Mirrors the TypeScript `PaymentRail` interface. Same shape (`create_hold` / `capture_payment` / `reverse_payment`), same drop-in-swap semantics. Sync API to match the rest of the Python SDK — no asyncio.
 
@@ -83,7 +83,7 @@ rail.reverse_payment(hold.external_id, 25.00)
 `StripeRail` includes onboarding helpers for off-session charges:
 
 ```python
-result = rail.create_customer("user@example.com", name="Jerry O")
+result = rail.create_customer("user@example.com", name="Ada O")
 # {"customer_id": "cus_..."}
 
 result = rail.create_setup_intent(customer_id="cus_...")
@@ -99,16 +99,16 @@ rail = StripeRail.from_client(MagicMock(), currency="usd")
 
 ## Compatibility with `@mnemopay/sdk` (TypeScript)
 
-| Feature | TypeScript v1.6.0-alpha.1 | Python v1.0.0b4 |
+| Feature | TypeScript v1.12.0 | Python v1.1.1 |
 |---|---|---|
 | `MockRail` | yes | yes |
 | `StripeRail` | yes | yes |
-| `PaystackRail` | yes | not yet |
-| `LightningRail` | yes | not yet |
+| `PaystackRail` | yes | yes |
+| `LightningRail` | yes | yes |
 | `StripeMPPRail` (alpha) | yes | not yet |
 | `X402Rail` (alpha) | yes | not yet |
 | `GoogleAP2Rail` (alpha) | yes | not yet |
-| Charter / FiscalGate / Article 12 (governance) | yes | not yet |
+| Governance (charter / FiscalGate / Article 12 / risk taxonomy / action ledger / governed skills) | yes | not yet |
 | Agent Credit Score | yes | yes |
 | Behavioral Finance | yes | yes |
 | Merkle integrity | yes | yes |
@@ -122,7 +122,7 @@ The Python SDK ships behind the TypeScript SDK — port priorities track agent-d
 
 ```bash
 pip install -e ".[dev,stripe]"
-pytest                    # 422 tests across 9 modules
+pytest                    # 435 tests across 9 modules
 pytest tests/test_rails.py -v   # 29 rail-specific tests
 ```
 

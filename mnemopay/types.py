@@ -161,11 +161,11 @@ class ReputationReport:
     generated_at: datetime
 
 
-# ── FICO Types ─────────────────────────────────────────────────────────────
+# ── Agent Reputation Scoring Types ─────────────────────────────────────────
 
 
 @dataclass
-class FICOTransaction:
+class AgentReputationTransaction:
     id: str
     amount: float
     status: TransactionStatus
@@ -177,8 +177,8 @@ class FICOTransaction:
 
 
 @dataclass
-class FICOInput:
-    transactions: List[FICOTransaction]
+class AgentReputationInput:
+    transactions: List[AgentReputationTransaction]
     created_at: datetime
     fraud_flags: int
     dispute_count: int
@@ -190,7 +190,7 @@ class FICOInput:
 
 
 @dataclass
-class FICOComponent:
+class AgentReputationComponent:
     score: float
     weight: float
     weighted: float
@@ -198,13 +198,13 @@ class FICOComponent:
 
 
 @dataclass
-class FICOResult:
+class AgentReputationResult:
     score: int
     rating: FICORating
     trust_level: TrustLevel
     fee_rate: float
     requires_hitl: bool
-    components: Dict[str, FICOComponent]
+    components: Dict[str, AgentReputationComponent]
     transaction_count: int
     stable: bool
     confidence: float
@@ -212,7 +212,7 @@ class FICOResult:
 
 
 @dataclass
-class FICOConfig:
+class AgentReputationConfig:
     w1: float = 0.35
     w2: float = 0.20
     w3: float = 0.15
@@ -223,6 +223,22 @@ class FICOConfig:
     recency_half_life_days: int = 90
     max_expected_counterparties: int = 20
     max_expected_categories: int = 10
+
+
+# Backward compatibility aliases
+FICOTransaction = AgentReputationTransaction
+FICOInput = AgentReputationInput
+FICOComponent = AgentReputationComponent
+FICOResult = AgentReputationResult
+FICOConfig = AgentReputationConfig
+AgentCreditScoreTransaction = AgentReputationTransaction
+AgentCreditScoreInput = AgentReputationInput
+AgentCreditScoreComponent = AgentReputationComponent
+AgentCreditScoreResult = AgentReputationResult
+AgentCreditScoreConfig = AgentReputationConfig
+AgentCreditRating = FICORating
+AgentReputationRating = FICORating
+
 
 
 # ── Behavioral Types ───────────────────────────────────────────────────────

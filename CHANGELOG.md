@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.2.0 — 2026-06-03 — Reputation renaming + Governance layer
+
+This release implements feature parity with the TypeScript SDK's governance and scoring systems.
+
+Added:
+- Core module `mnemopay.agent_reputation_scoring` defining `AgentReputationScoring` and primary types `AgentReputationTransaction`, `AgentReputationInput`, `AgentReputationComponent`, `AgentReputationResult`, and `AgentReputationConfig`.
+- Sub-package `mnemopay.governance` porting the policy engine, risk classification taxonomy, in-memory/file-backed JSONL `AuditChain` (with JCS canonicalization and tree-Merkle root calculation), and the typed `ActionLedger` trace engine.
+- Complete test suites for the reputation renaming and the new governance primitives.
+
+Changed:
+- Legacy modules `mnemopay.fico` and `mnemopay.agent_credit_score` (and classes `AgentFICO`, `AgentCreditScore`) are deprecated and subclass `AgentReputationScoring`, raising deprecation warnings to assist in smooth codebase migration.
+- Version bumped to `1.2.0`.
+
 ## 1.1.1 — 2026-05-30 — Docs + metadata sync
 
 No code changes — documentation and packaging metadata catch up to the 1.1.0 rail work and the current TypeScript SDK state.

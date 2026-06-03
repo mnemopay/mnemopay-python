@@ -33,6 +33,9 @@ from .commerce import (
     OrderStatus,
     Product,
 )
+from .agent_reputation_scoring import (
+    AgentReputationScoring,
+)
 from .agent_credit_score import (
     AgentCreditRating,
     AgentCreditScore,
@@ -81,6 +84,12 @@ from .types import (
     FICORating,
     FICOResult,
     FICOTransaction,
+    AgentReputationTransaction,
+    AgentReputationInput,
+    AgentReputationComponent,
+    AgentReputationResult,
+    AgentReputationConfig,
+    AgentReputationRating,
     FinancialGoal,
     HerdAlert,
     HerdSeverity,
@@ -109,15 +118,16 @@ from .types import (
     TrustLevel,
 )
 
-__version__ = "1.1.1"
+__version__ = "1.2.0"
 __all__ = [
     # Core
     "MnemoPay",
     "auto_score",
     "compute_score",
     # Modules
-    "AgentCreditScore",
-    "AgentFICO",  # deprecated alias of AgentCreditScore; removal v2.0.0
+    "AgentReputationScoring",
+    "AgentCreditScore",  # deprecated alias; removal v2.0.0
+    "AgentFICO",  # deprecated alias; removal v2.0.0
     "BehavioralEngine",
     "MerkleTree",
     "EWMADetector",
@@ -159,7 +169,14 @@ __all__ = [
     "AuditEntry",
     "ReputationReport",
     "ReputationTier",
-    # Agent Credit Score types (canonical)
+    # Agent Reputation Scoring types (canonical)
+    "AgentReputationTransaction",
+    "AgentReputationInput",
+    "AgentReputationComponent",
+    "AgentReputationResult",
+    "AgentReputationConfig",
+    "AgentReputationRating",
+    # Agent Credit Score types (deprecated)
     "AgentCreditScoreConfig",
     "AgentCreditScoreInput",
     "AgentCreditScoreTransaction",

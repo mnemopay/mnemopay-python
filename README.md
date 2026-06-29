@@ -100,7 +100,7 @@ rail = StripeRail.from_client(MagicMock(), currency="usd")
 
 ## Compatibility with `@mnemopay/sdk` (TypeScript)
 
-| Feature | TypeScript v1.12.0 | Python v1.1.1 |
+| Feature | TypeScript v1.14.1 | Python v1.2.2 |
 |---|---|---|
 | `MockRail` | yes | yes |
 | `StripeRail` | yes | yes |
@@ -123,8 +123,8 @@ The Python SDK ships behind the TypeScript SDK — port priorities track agent-d
 
 ```bash
 pip install -e ".[dev,stripe]"
-pytest                    # 435 tests across 9 modules
-pytest tests/test_rails.py -v   # 29 rail-specific tests
+pytest                    # 456 tests across 10 modules
+pytest tests/test_rails.py -v
 ```
 
 ## License

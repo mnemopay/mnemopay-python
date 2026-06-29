@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.2 - 2026-06-29 - README metadata sync
+
+Changed:
+- README compatibility table and test-count metadata now match the published Python 1.2.x package and current TypeScript SDK.
+
 ## 1.2.1 - 2026-06-29 - Settlement hold parity
 
 Fixes Python payment lifecycle parity with the TypeScript SDK.

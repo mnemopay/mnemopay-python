@@ -8,6 +8,7 @@ Give any AI agent memory and a wallet in 5 lines:
     agent = MnemoPay("my-agent")
     agent.remember("user prefers Python")
     tx = agent.charge(10.00, "API call")
+    # Settle after the escrow hold window expires.
     agent.settle(tx.id)
 """
 
@@ -118,7 +119,7 @@ from .types import (
     TrustLevel,
 )
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 __all__ = [
     # Core
     "MnemoPay",

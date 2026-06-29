@@ -1,8 +1,11 @@
 """Tests for CommerceEngine — autonomous shopping with escrow + approval flow."""
 
 import asyncio
+from datetime import timedelta
+
 import pytest
 from mnemopay import MnemoPay
+from mnemopay.core import SETTLEMENT_HOLD_MINUTES
 from mnemopay.commerce import (
     CommerceEngine,
     Mandate,
@@ -15,6 +18,12 @@ from mnemopay.commerce import (
 def run(coro):
     """Helper to run async code in sync tests."""
     return asyncio.get_event_loop().run_until_complete(coro)
+
+
+def age_escrow_after_hold(agent: MnemoPay, order) -> None:
+    agent._transactions[order.escrow_tx_id].created_at -= timedelta(
+        minutes=SETTLEMENT_HOLD_MINUTES + 1
+    )
 
 
 class TestCommerceEngine:
@@ -95,8 +104,18 @@ class TestCommerceEngine:
         products = run(self.engine.search("API"))
         order = run(self.engine.buy(products[0]))
         if order.status == OrderStatus.PURCHASED:
+            age_escrow_after_hold(self.agent, order)
             delivered = self.engine.confirm_delivery(order.id)
             assert delivered.status == OrderStatus.DELIVERED
+
+    def test_confirm_delivery_before_hold_expires_raises(self):
+        self.engine.set_mandate(Mandate(max_single=50.0, max_daily=200.0))
+        products = run(self.engine.search("API"))
+        order = run(self.engine.buy(products[0]))
+        if order.status == OrderStatus.PURCHASED:
+            with pytest.raises(ValueError, match="Settlement hold"):
+                self.engine.confirm_delivery(order.id)
+            assert order.status == OrderStatus.PURCHASED
 
     def test_confirm_delivery_wrong_status_raises(self):
         products = run(self.engine.search("API"))

@@ -256,15 +256,11 @@ class CommerceEngine:
         if order.status != OrderStatus.PURCHASED:
             raise ValueError(f"Order {order_id} is {order.status.value}, not purchased")
 
+        if order.escrow_tx_id:
+            self._agent.settle(order.escrow_tx_id)
+
         order.status = OrderStatus.DELIVERED
         order.delivered_at = datetime.now(timezone.utc)
-
-        # Settle escrow
-        if order.escrow_tx_id:
-            try:
-                self._agent.settle(order.escrow_tx_id)
-            except Exception:
-                pass  # Already settled or failed — non-fatal
 
         return order
 

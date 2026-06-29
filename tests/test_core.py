@@ -12,6 +12,7 @@ from mnemopay.core import (
     BASE_IMPORTANCE,
     LONG_CONTENT_THRESHOLD,
     MAX_WALLET_BALANCE,
+    SETTLEMENT_HOLD_MINUTES,
     _get_fee_rate,
     _sanitize_content,
     _validate_tags,
@@ -20,6 +21,11 @@ from mnemopay.types import (
     ReputationTier,
     TransactionStatus,
 )
+
+
+def settle_after_hold(agent: MnemoPay, tx_id: str):
+    agent._transactions[tx_id].created_at -= timedelta(minutes=SETTLEMENT_HOLD_MINUTES + 1)
+    return agent.settle(tx_id)
 
 # ── Memory Operations ──────────────────────────────────────────────────────
 
@@ -304,23 +310,29 @@ class TestPayments:
     def test_settle_completes(self):
         agent = MnemoPay("test")
         tx = agent.charge(10.00, "Test")
-        settled = agent.settle(tx.id)
+        settled = settle_after_hold(agent, tx.id)
         assert settled.status == TransactionStatus.COMPLETED
         assert settled.completed_at is not None
         assert settled.platform_fee is not None
         assert settled.net_amount is not None
 
+    def test_settle_before_hold_expires_raises(self):
+        agent = MnemoPay("test")
+        tx = agent.charge(10.00, "Test")
+        with pytest.raises(ValueError, match="Settlement hold"):
+            agent.settle(tx.id)
+
     def test_settle_adds_to_wallet(self):
         agent = MnemoPay("test")
         tx = agent.charge(100.00, "Test")
-        agent.settle(tx.id)
+        settle_after_hold(agent, tx.id)
         bal = agent.balance()
         assert bal.wallet > 0
 
     def test_settle_applies_fee(self):
         agent = MnemoPay("test")
         tx = agent.charge(100.00, "Test")
-        settled = agent.settle(tx.id)
+        settled = settle_after_hold(agent, tx.id)
         assert settled.platform_fee > 0
         assert settled.net_amount < settled.amount
         assert settled.net_amount + settled.platform_fee == pytest.approx(settled.amount, abs=0.01)
@@ -341,7 +353,7 @@ class TestPayments:
         agent = MnemoPay("test")
         initial_rep = agent.balance().reputation
         tx = agent.charge(10.00, "Test")
-        agent.settle(tx.id)
+        settle_after_hold(agent, tx.id)
         assert agent.balance().reputation > initial_rep
 
     def test_settle_reinforces_recent_memories(self):
@@ -349,7 +361,7 @@ class TestPayments:
         agent.remember("Active memory", importance=0.5)
         agent.recall(1)  # Access it
         tx = agent.charge(10.00, "Test")
-        agent.settle(tx.id)
+        settle_after_hold(agent, tx.id)
         memories = agent.recall(1)
         assert memories[0].importance > 0.5  # Hebbian boost
 
@@ -361,9 +373,9 @@ class TestPayments:
     def test_settle_already_completed(self):
         agent = MnemoPay("test")
         tx = agent.charge(10.00, "Test")
-        agent.settle(tx.id)
+        settle_after_hold(agent, tx.id)
         with pytest.raises(ValueError, match="not pending"):
-            agent.settle(tx.id)
+            settle_after_hold(agent, tx.id)
 
     def test_refund_pending(self):
         agent = MnemoPay("test")
@@ -374,7 +386,7 @@ class TestPayments:
     def test_refund_completed(self):
         agent = MnemoPay("test")
         tx = agent.charge(100.00, "Test")
-        agent.settle(tx.id)
+        settle_after_hold(agent, tx.id)
         initial_wallet = agent.balance().wallet
         agent.refund(tx.id)
         assert agent.balance().wallet < initial_wallet
@@ -382,7 +394,7 @@ class TestPayments:
     def test_refund_reduces_reputation(self):
         agent = MnemoPay("test")
         tx = agent.charge(10.00, "Test")
-        agent.settle(tx.id)
+        settle_after_hold(agent, tx.id)
         rep_before = agent.balance().reputation
         agent.refund(tx.id)
         assert agent.balance().reputation < rep_before
@@ -436,7 +448,7 @@ class TestPayments:
         agent._reputation = 1.0  # Max reputation to allow large charges
         tx = agent.charge(100.00, "Big charge")
         with pytest.raises(ValueError, match="overflow"):
-            agent.settle(tx.id)
+            settle_after_hold(agent, tx.id)
 
 
 # ── Dispute Resolution ─────────────────────────────────────────────────────
@@ -446,7 +458,7 @@ class TestDisputes:
     def test_dispute_completed_tx(self):
         agent = MnemoPay("test")
         tx = agent.charge(10.00, "Test")
-        agent.settle(tx.id)
+        settle_after_hold(agent, tx.id)
         dispute = agent.dispute(tx.id, "Wrong amount")
         assert dispute.status == "open"
         assert dispute.reason == "Wrong amount"
@@ -460,7 +472,7 @@ class TestDisputes:
     def test_resolve_dispute_refund(self):
         agent = MnemoPay("test")
         tx = agent.charge(10.00, "Test")
-        agent.settle(tx.id)
+        settle_after_hold(agent, tx.id)
         d = agent.dispute(tx.id, "Wrong")
         resolved = agent.resolve_dispute(d.id, "refund")
         assert resolved.outcome == "refund"
@@ -469,7 +481,7 @@ class TestDisputes:
     def test_resolve_dispute_uphold(self):
         agent = MnemoPay("test")
         tx = agent.charge(10.00, "Test")
-        agent.settle(tx.id)
+        settle_after_hold(agent, tx.id)
         d = agent.dispute(tx.id, "Wrong")
         resolved = agent.resolve_dispute(d.id, "uphold")
         assert resolved.outcome == "uphold"
@@ -477,7 +489,7 @@ class TestDisputes:
     def test_resolve_dispute_invalid_outcome(self):
         agent = MnemoPay("test")
         tx = agent.charge(10.00, "Test")
-        agent.settle(tx.id)
+        settle_after_hold(agent, tx.id)
         d = agent.dispute(tx.id, "Wrong")
         with pytest.raises(ValueError, match="refund.*uphold"):
             agent.resolve_dispute(d.id, "invalid")
@@ -576,7 +588,7 @@ class TestReputation:
     def test_reputation_settlement_rate(self):
         agent = MnemoPay("test")
         tx1 = agent.charge(10.00, "Test1")
-        agent.settle(tx1.id)
+        settle_after_hold(agent, tx1.id)
         tx2 = agent.charge(10.00, "Test2")
         agent.refund(tx2.id)
         rep = agent.reputation()
@@ -596,13 +608,13 @@ class TestReputation:
         agent = MnemoPay("test")
         rep_before = agent.reputation().score
         tx = agent.charge(10.00, "Test")
-        agent.settle(tx.id)
+        settle_after_hold(agent, tx.id)
         assert agent.reputation().score > rep_before
 
     def test_reputation_decreases_on_refund(self):
         agent = MnemoPay("test")
         tx = agent.charge(10.00, "Test")
-        agent.settle(tx.id)
+        settle_after_hold(agent, tx.id)
         rep_before = agent.reputation().score
         agent.refund(tx.id)
         assert agent.reputation().score < rep_before
@@ -611,14 +623,14 @@ class TestReputation:
         agent = MnemoPay("test")
         agent._reputation = 0.99
         tx = agent.charge(10.00, "Test")
-        agent.settle(tx.id)
+        settle_after_hold(agent, tx.id)
         assert agent._reputation <= 1.0
 
     def test_reputation_floored_at_0(self):
         agent = MnemoPay("test")
         agent._reputation = 0.02
         tx = agent.charge(1.00, "Test")
-        agent.settle(tx.id)
+        settle_after_hold(agent, tx.id)
         agent.refund(tx.id)
         assert agent._reputation >= 0.0
 
@@ -642,7 +654,7 @@ class TestEvents:
         agent.on("payment:pending", lambda d: pending.append(d))
         agent.on("payment:completed", lambda d: completed.append(d))
         tx = agent.charge(10.00, "Test")
-        agent.settle(tx.id)
+        settle_after_hold(agent, tx.id)
         assert len(pending) == 1
         assert len(completed) == 1
 
@@ -671,7 +683,7 @@ class TestAuditLog:
     def test_audit_captures_payment_ops(self):
         agent = MnemoPay("test")
         tx = agent.charge(10.00, "Test")
-        agent.settle(tx.id)
+        settle_after_hold(agent, tx.id)
         logs = agent.logs(10)
         actions = [l.action for l in logs]
         assert "payment:pending" in actions
@@ -730,6 +742,6 @@ class TestEdgeCases:
     def test_wallet_never_negative(self):
         agent = MnemoPay("test")
         tx = agent.charge(10.00, "Test")
-        agent.settle(tx.id)
+        settle_after_hold(agent, tx.id)
         agent.refund(tx.id)
         assert agent.balance().wallet >= 0

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.1 - 2026-06-29 - Settlement hold parity
+
+Fixes Python payment lifecycle parity with the TypeScript SDK.
+
+Fixed:
+- `MnemoPay.settle()` now enforces the 30-minute escrow settlement hold instead of allowing immediate capture.
+- `CommerceEngine.confirm_delivery()` now settles escrow before marking an order delivered, and leaves the order purchased if the hold has not expired so callers can retry.
+- README and package docstring examples now call out the escrow hold window.
+
+Tested:
+- 456/456 tests passing.
+
 ## 1.2.0 — 2026-06-03 — Reputation renaming + Governance layer
 
 This release implements feature parity with the TypeScript SDK's governance and scoring systems.

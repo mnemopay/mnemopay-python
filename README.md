@@ -8,6 +8,7 @@ from mnemopay import MnemoPay
 agent = MnemoPay("my-agent")
 agent.remember("user prefers Python")
 tx = agent.charge(10.00, "API call")
+# Settle after the escrow hold window expires.
 agent.settle(tx.id)
 ```
 

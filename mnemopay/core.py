@@ -16,7 +16,7 @@ from __future__ import annotations
 import math
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional
 
 from .types import (
@@ -39,6 +39,7 @@ MAX_TRANSACTIONS = 100_000
 BASE_IMPORTANCE = 0.50
 LONG_CONTENT_THRESHOLD = 200
 LONG_CONTENT_BOOST = 0.10
+SETTLEMENT_HOLD_MINUTES = 30
 
 IMPORTANCE_PATTERNS: List[Dict[str, Any]] = [
     {"pattern": re.compile(r"\b(error|fail|crash|critical|broken|bug)\b", re.I), "boost": 0.20},
@@ -236,6 +237,7 @@ class MnemoPay:
         mem_id = agent.remember("user prefers Python")
         memories = agent.recall(5)
         tx = agent.charge(10.00, "API call")
+        # Settle after the escrow hold window expires.
         agent.settle(tx.id)
     """
 
@@ -541,6 +543,15 @@ class MnemoPay:
             raise ValueError(f"Transaction {tx_id} not found")
         if tx.status != TransactionStatus.PENDING:
             raise ValueError(f"Transaction {tx_id} is {tx.status.value}, not pending")
+
+        hold_until = tx.created_at + timedelta(minutes=SETTLEMENT_HOLD_MINUTES)
+        now = datetime.now(timezone.utc)
+        if now < hold_until:
+            remaining = math.ceil((hold_until - now).total_seconds() / 60)
+            raise ValueError(
+                f"Settlement hold: {remaining} minute(s) remaining. "
+                f"Charge must be held for {SETTLEMENT_HOLD_MINUTES} minutes before settlement."
+            )
 
         # Apply platform fee (volume-tiered)
         fee_rate = _get_fee_rate(self._total_volume)

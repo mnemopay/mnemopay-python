@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.3.0 - audit-chain cross-runtime parity
+
+Fixed:
+- `canonicalize()` now serializes strings and numbers exactly like JavaScript's `JSON.stringify`. Before, bundles containing non-ASCII text, control characters, or exponent-form floats (for example `1e21`, `1.5e-7`) were hashed differently from the TypeScript SDK and failed its `verifyBundle()` with `root_mismatch`. Verified in both directions against `@mnemopay/sdk` 1.15.0.
+- README quickstart no longer calls `settle()` immediately, which always raised during the 30-minute hold.
+- Package now ships `py.typed` (it already declared `Typing :: Typed`).
+
+Changed:
+- README compatibility table now states precisely which governance pieces Python has.
+
+Note: events serialized with `null` for unset `parent_id`/`signature` still differ from the TS form, which omits absent fields. `AuditChain.roll_and_export()` omits them correctly.
+
 ## 1.2.2 - 2026-06-29 - README metadata sync
 
 Changed:

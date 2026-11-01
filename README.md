@@ -8,8 +8,11 @@ from mnemopay import MnemoPay
 agent = MnemoPay("my-agent")
 agent.remember("user prefers Python")
 tx = agent.charge(10.00, "API call")
-# Settle after the escrow hold window expires.
-agent.settle(tx.id)
+print(tx.status)  # held in escrow
+
+# settle() raises ValueError until the 30-minute escrow hold has elapsed;
+# call it from a scheduler or after the window, not immediately:
+# agent.settle(tx.id)
 ```
 
 ## Install
@@ -100,7 +103,7 @@ rail = StripeRail.from_client(MagicMock(), currency="usd")
 
 ## Compatibility with `@mnemopay/sdk` (TypeScript)
 
-| Feature | TypeScript v1.14.1 | Python v1.2.2 |
+| Feature | TypeScript v1.15.0 | Python v1.3.0 |
 |---|---|---|
 | `MockRail` | yes | yes |
 | `StripeRail` | yes | yes |
@@ -109,7 +112,8 @@ rail = StripeRail.from_client(MagicMock(), currency="usd")
 | `StripeMPPRail` (alpha) | yes | not yet |
 | `X402Rail` (alpha) | yes | not yet |
 | `GoogleAP2Rail` (alpha) | yes | not yet |
-| Governance (charter / FiscalGate / Article 12 / risk taxonomy / action ledger / governed skills) | yes | not yet |
+| Governance: policy engine, risk taxonomy, action ledger, `AuditChain` (cross-runtime verifiable) | yes | yes |
+| Governance: charter, FiscalGate, Article 12 builder, anchor sinks, durable ledger (hash-chained, tamper-evident) | yes | not yet |
 | Agent Credit Score | yes | yes |
 | Behavioral Finance | yes | yes |
 | Merkle integrity | yes | yes |

@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import uuid
+from decimal import Decimal
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional, Union
@@ -40,19 +41,80 @@ class ChainBundle:
 # ─── Canonicalization & Hash ────────────────────────────────────────────────
 
 
+_JS_SIMPLE_ESCAPES = {
+    '"': '\\"',
+    "\\": "\\\\",
+    "\b": "\\b",
+    "\f": "\\f",
+    "\n": "\\n",
+    "\r": "\\r",
+    "\t": "\\t",
+}
+
+
+def _js_string(value: str) -> str:
+    """Serialize a str exactly as JavaScript's JSON.stringify does.
+
+    Python's json.dumps escapes every non-ASCII character by default, while
+    JSON.stringify emits them literally and escapes only quotes, backslashes,
+    control characters below U+0020 and lone surrogates. A bundle only verifies
+    across runtimes when both sides hash the same bytes.
+    """
+    out = ['"']
+    for ch in value:
+        o = ord(ch)
+        esc = _JS_SIMPLE_ESCAPES.get(ch)
+        if esc is not None:
+            out.append(esc)
+        elif o < 0x20 or 0xD800 <= o <= 0xDFFF:
+            out.append("\\u%04x" % o)
+        else:
+            out.append(ch)
+    out.append('"')
+    return "".join(out)
+
+
+def _js_number(value: Union[int, float]) -> str:
+    """Serialize a number exactly as JavaScript's Number#toString does."""
+    x = float(value)
+    if x != x or x in (float("inf"), float("-inf")):
+        return "null"  # JSON.stringify(NaN) and JSON.stringify(Infinity)
+    if x == 0:
+        return "0"  # also -0
+    sign = "-" if x < 0 else ""
+    sign_bit, digit_tuple, exp = Decimal(repr(abs(x))).as_tuple()
+    digits = "".join(str(d) for d in digit_tuple).rstrip("0") or "0"
+    k = len(digits)
+    # value = 0.DIGITS * 10**n, per the ECMAScript Number::toString algorithm
+    n = len(digit_tuple) + exp
+    if k <= n <= 21:
+        return sign + digits + "0" * (n - k)
+    if 0 < n <= 21:
+        return sign + digits[:n] + "." + digits[n:]
+    if -6 < n <= 0:
+        return sign + "0." + "0" * (-n) + digits
+    e = n - 1
+    e_str = ("+" if e >= 0 else "-") + str(abs(e))
+    if k == 1:
+        return sign + digits + "e" + e_str
+    return sign + digits[0] + "." + digits[1:] + "e" + e_str
+
+
 def canonicalize(value: Any) -> str:
-    """JCS-compliant canonical serialization (alphabetical keys, no whitespace)."""
+    """Canonical serialization (alphabetical keys, no whitespace).
+
+    Byte-for-byte compatible with the TypeScript SDK's canonicalize(), which
+    uses JSON.stringify for scalars. Strings and numbers are therefore
+    formatted the way JavaScript formats them, not the way Python does.
+    """
     if value is None:
         return "null"
     if isinstance(value, bool):
         return "true" if value else "false"
     if isinstance(value, (int, float)):
-        # Convert float to integer if it has no fractional part to match JS float behavior
-        if isinstance(value, float) and value.is_integer():
-            return str(int(value))
-        return json.dumps(value, separators=(",", ":"))
+        return _js_number(value)
     if isinstance(value, str):
-        return json.dumps(value, separators=(",", ":"))
+        return _js_string(value)
     if isinstance(value, list):
         return "[" + ",".join(canonicalize(x) for x in value) + "]"
     if isinstance(value, dict):
@@ -60,7 +122,7 @@ def canonicalize(value: Any) -> str:
         return (
             "{"
             + ",".join(
-                json.dumps(k, separators=(",", ":")) + ":" + canonicalize(value[k])
+                _js_string(k) + ":" + canonicalize(value[k])
                 for k in keys
             )
             + "}"

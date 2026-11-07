@@ -6,26 +6,65 @@ Zero external dependencies, pure stdlib.
 Integrates with LND REST APIs via HODL/standard invoice escrows. Features:
   - strict protocol checks
   - rigorous static SSRF block engine (`is_private_or_reserved`)
-  - self-signed SSL compatibility using unverified SSL contexts
+  - TLS certificate verification ON by default; self-signed LND nodes are
+    supported by pointing ``tls_cert_path`` at LND's ``tls.cert`` and/or pinning
+    its SHA-256 fingerprint via ``tls_fingerprint``
   - URL-safe base64 path mappings for LND compatibility
 """
 from __future__ import annotations
 
+import hashlib
+import http.client
 import json
 import re
 import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
+import warnings
 from typing import Any, Dict, Optional
 
 from . import HoldOptions, PaymentRailResult
+
+
+def _normalize_fingerprint(fp: str) -> str:
+    """Accept ``AA:BB:..``, ``aabb..`` or ``sha256:aabb..``; return lowercase hex."""
+    h = fp.strip().lower()
+    if h.startswith("sha256:"):
+        h = h[len("sha256:"):]
+    h = h.replace(":", "").replace(" ", "")
+    if not re.fullmatch(r"[0-9a-f]{64}", h):
+        raise ValueError("tls_fingerprint must be a SHA-256 hex digest (64 hex chars)")
+    return h
+
+
+class _PinnedHTTPSConnection(http.client.HTTPSConnection):
+    """HTTPS connection that checks the server certificate's SHA-256 fingerprint
+    immediately after the handshake and BEFORE any request bytes (the admin
+    macaroon header) are sent."""
+
+    _pin: str = ""
+
+    def connect(self) -> None:
+        super().connect()
+        der = self.sock.getpeercert(binary_form=True)  # type: ignore[union-attr]
+        got = hashlib.sha256(der or b"").hexdigest()
+        if got != self._pin:
+            self.close()
+            raise ssl.SSLError("LND TLS certificate fingerprint mismatch")
 
 
 class LightningRail:
     """Lightning payment rail conforming to PaymentRail protocol.
 
     Uses LND REST invoices for instant, sub-cent micropayments.
+
+    TLS: certificates are verified by default (system CA store + hostname).
+    LND nodes normally use a self-signed cert, so pass ``tls_cert_path`` (path to
+    LND's ``tls.cert``; it becomes the only trusted CA, hostname still checked)
+    and/or ``tls_fingerprint`` (SHA-256 of the DER cert; pins the exact cert and
+    skips chain/hostname validation, since the pin is the trust anchor).
+    There is intentionally no "skip verification" switch.
     """
 
     name: str = "lightning"
@@ -129,6 +168,8 @@ class LightningRail:
         lnd_rest_url: str,
         macaroon: str,
         btc_price_usd: float = 60000.0,
+        tls_cert_path: Optional[str] = None,
+        tls_fingerprint: Optional[str] = None,
     ) -> None:
         if not lnd_rest_url:
             raise ValueError("LND REST URL is required")
@@ -153,6 +194,30 @@ class LightningRail:
         self.base_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path.rstrip('/')}"
         self.macaroon = macaroon
         self.btc_price_usd = btc_price_usd
+        self.tls_cert_path = tls_cert_path
+        self._pin: Optional[str] = (
+            _normalize_fingerprint(tls_fingerprint) if tls_fingerprint else None
+        )
+        if parsed.scheme == "http":
+            # The admin macaroon would travel in cleartext. LND REST is TLS-only
+            # by default, so plain http is only sane through a trusted tunnel.
+            warnings.warn(
+                "LND URL uses http://: the admin macaroon is sent unencrypted",
+                stacklevel=2,
+            )
+        self._ssl_ctx = self._build_ssl_context()
+
+    def _build_ssl_context(self) -> ssl.SSLContext:
+        """Verifying context. Pinned-only mode trusts the fingerprint instead of a CA."""
+        if self.tls_cert_path:
+            ctx = ssl.create_default_context(cafile=self.tls_cert_path)
+        elif self._pin:
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+        else:
+            ctx = ssl.create_default_context()
+        return ctx
 
     def set_btc_price(self, usd: float) -> None:
         """Update active exchange rate for USD -> sats conversion."""
@@ -249,12 +314,19 @@ class LightningRail:
             method=method,
         )
 
-        # Standard LND nodes often employ self-signed SSL certs in dev.
-        # Bypass strict certificate verification while securing hosts via our static SSRF blocks.
-        ctx = ssl._create_unverified_context()
+        # Certificate verification is ON. Self-signed LND certs are handled by the
+        # configured tls_cert_path (trusted root) and/or tls_fingerprint (pin).
+        ctx = self._ssl_ctx
 
         try:
-            with urllib.request.urlopen(req, timeout=30.0, context=ctx) as res:
+            if self._pin:
+                opener = urllib.request.build_opener(
+                    self._pinned_handler(ctx, self._pin),
+                )
+                res_cm = opener.open(req, timeout=30.0)
+            else:
+                res_cm = urllib.request.urlopen(req, timeout=30.0, context=ctx)
+            with res_cm as res:
                 resp_bytes = res.read()
                 if not resp_bytes:
                     return {}
@@ -264,3 +336,16 @@ class LightningRail:
             raise RuntimeError(f"LND API error ({e.code})") from e
         except Exception as e:
             raise RuntimeError(f"Request failed: {e}") from e
+
+    @staticmethod
+    def _pinned_handler(
+        ctx: ssl.SSLContext, pin: str,
+    ) -> urllib.request.HTTPSHandler:
+        class _Conn(_PinnedHTTPSConnection):
+            _pin = pin
+
+        class _Handler(urllib.request.HTTPSHandler):
+            def https_open(self, req: urllib.request.Request):  # type: ignore[override]
+                return self.do_open(_Conn, req, context=ctx)
+
+        return _Handler(context=ctx)

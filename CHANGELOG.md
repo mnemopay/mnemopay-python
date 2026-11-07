@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.3.1 - Lightning rail verifies TLS (security)
+
+Security:
+- `LightningRail` no longer uses `ssl._create_unverified_context()`. LND REST calls now verify the server certificate (and hostname) by default, so a network-path attacker can no longer read the admin macaroon or tamper with invoices.
+
+Added:
+- `LightningRail(..., tls_cert_path=...)`: path to LND's `tls.cert`; trusted as the only CA (hostname still checked).
+- `LightningRail(..., tls_fingerprint=...)`: pin the server certificate by SHA-256 (hex, `AA:BB:..` or `sha256:` forms accepted). Checked right after the handshake, before the macaroon header is sent.
+- A `UserWarning` when the LND URL is plain `http://`.
+
+Breaking (intentional): LND nodes with a self-signed certificate that previously worked because verification was off now fail with `Request failed: ... CERTIFICATE_VERIFY_FAILED` until `tls_cert_path` or `tls_fingerprint` is configured. There is deliberately no "skip verification" switch.
+
 ## 1.3.0 - audit-chain cross-runtime parity
 
 Fixed:
